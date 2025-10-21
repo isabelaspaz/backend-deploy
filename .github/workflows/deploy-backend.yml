@@ -10,9 +10,7 @@ on:
 jobs: 
     build:
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: Backend
+        
 
         steps:
             - name: Check out the repository
