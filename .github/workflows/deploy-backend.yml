@@ -1,44 +1,67 @@
+#Definindo o nome que vai aparecer no painel do github:
 name: CI/CD Pipeline
 
+#Definindo os gatilhos, quando esse workflow vai ser executado:
 on: 
+  #Definindo que o workflow vai ser acionado quando houver um push da main:
     push:
         branches:
             - main
-    pull_request: 
-        branches: 
+            #Definindo que o workflow também vai ser acionado quando tiver um pull request novo/atualizado na main:
+    pull_request:
+        branches:
             - main
+#Iniciando a definição dos jobs:
 jobs: 
+    #Nomeando o primeiro job de build:
     build:
-        runs-on: ubuntu-latest
+        #Definindo o ambiente onde este job será executado.
+        runs-on: ubuntu-latest #Neste caso, uma máquina virtual com a versão mais recente do Ubuntu.
         
-
+        #Iniciando o passo a passo a ser executado nesse job:
         steps:
+            #Passo 1: baixar o código do github para a máquina virtual de execução:
             - name: Check out the repository
-              uses: actions/checkout@v2
-
+            #Utilizar a action do github para fazer o checkout.
+              uses: actions/checkout@v2 #Pega o código do github e joga na máquina virtual.
+            
+              
+            #Passo 2: configurar o ambiente Java para poder compilar o projeto:
             - name: Set up JDK 21
+            #Utilizar a action do github para configurar a JDK:
               uses: actions/setup-java@v4
-              with:
-                    java-version: "21"
-                    distribution: "temurin"
+              with: #Configurações para o Java:
+                    java-version: "21" #Define a versão a ser instalada.
+                    distribution: "temurin" #Define a distribuição do Java, a Temurin é uma alternativa popular e open source.
+            
+            #Passo 3: Compilar e empacotar o projeto Java com o Maven:
             - name: Build with maven 
+            #Roda o Maven, remove arquivos gerados de builds anteriores, compila o código, gera JAR/WAR e pula os testes unitários/de integração:
               run: mvn -B clean package -DskipTests
 
+            #Passo 4: Criar imagem Docker do app Java:
             - name: Build Docker image
+            #Roda o Docker, constrói a imagem, nomeia a imagem como my-app-java, indica que o Dockerfile tá na raiz do repositório:
               run: docker build -t my-app-java .
 
+    #Nomeando o segundo job de deploy:
     deploy:
-        name: Deploy to production
-        needs: [build]
-        runs-on: ubuntu-latest
+        name: Deploy to production #Nome que vai aparecer no github actions.
+        needs: [build] #Esse job só vai ser executado se o build tiver sido concluído com êxito.
+        runs-on: ubuntu-latest #Define o ambiente do job.
 
-        steps:
+        steps: #Configurando o passo a passo do deploy.
+        #Passo 1: Adicionar o deploy no Render:
             - name: Deploy to render
+            #Utiliza essa ação customizada para interagir com a API do Render:
               uses: johnbeynon/render-deploy-action@v0.0.8
-              with: 
+              with: #Configurações para o Render:
+                #Passa o ID único do serviço Render. Variável secreta configurada no github:
                 service-id: ${{ secrets.SERVICE_ID }}
+                #Passa a chave de API do Render para autenticação, também retirada de uma variável secreta:
                 api-key: ${{ secrets.RENDER_API_KEY }}
 
-
+#Imagem Docker: um pacote leve, independente e executável que contém tudo o que é necessário para executar um software:
+#o código, a biblioteca do sistema, ferramentas, dependências e configurações.
         
 
